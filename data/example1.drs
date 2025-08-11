@@ -1,0 +1,4 @@
+(.bronze 'bronze.py')
+(.silver 'silver.py')
+
+(bronze -> silver)
