@@ -20,6 +20,16 @@ pub enum Lexer {
     Edge(NodeId, NodeId),
 }
 
+fn parse_items(i: &str) -> Parser<'_, Vec<Lexer>> {
+    many1(parse_item).parse(i)
+}
+
+fn parse_item(i: &str) -> Parser<'_, Lexer> {
+    let (i, lst) = alt((parse_node, parse_edges)).parse(i)?;
+
+    Ok((i, lst))
+}
+
 fn parse_edges(i: &str) -> Parser<'_, Lexer> {
     let (i, _) = tag("(")(i)?;
     let (i, a) = alphanumeric1(i)?;
@@ -30,25 +40,6 @@ fn parse_edges(i: &str) -> Parser<'_, Lexer> {
     let (i, _) = tag(")")(i)?;
 
     Ok((i, Lexer::Edge(NodeId(a.to_string()), NodeId(b.to_string()))))
-}
-
-fn parse_file_path(i: &str) -> Parser<'_, FilePath> {
-    let (i, _) = tag("'")(i)?;
-    let (i, fpath) = alphanumeric1(i)?;
-    let (i, fpath_extension) = parse_file_extension(i)?;
-    let (i, _) = tag("'")(i)?;
-
-    Ok((i, FilePath(fpath.to_owned() + &fpath_extension)))
-}
-
-fn parse_file_extension(i: &str) -> Parser<'_, String> {
-    let (i, maybe_dot) = opt(tag(".")).parse(i)?;
-    let (i, maybe_extension) = opt(alphanumeric1).parse(i)?;
-
-    Ok((
-        i,
-        maybe_dot.unwrap_or("").to_owned() + maybe_extension.unwrap_or(""),
-    ))
 }
 
 fn parse_node(i: &str) -> Parser<'_, Lexer> {
@@ -68,14 +59,23 @@ fn parse_node(i: &str) -> Parser<'_, Lexer> {
     ))
 }
 
-fn parse_item(i: &str) -> Parser<'_, Lexer> {
-    let (i, lst) = alt((parse_node, parse_edges)).parse(i)?;
+fn parse_file_path(i: &str) -> Parser<'_, FilePath> {
+    let (i, _) = tag("'")(i)?;
+    let (i, fpath) = alphanumeric1(i)?;
+    let (i, fpath_extension) = parse_file_extension(i)?;
+    let (i, _) = tag("'")(i)?;
 
-    Ok((i, lst))
+    Ok((i, FilePath(fpath.to_owned() + &fpath_extension)))
 }
 
-fn parse_items(i: &str) -> Parser<'_, Vec<Lexer>> {
-    many1(parse_item).parse(i)
+fn parse_file_extension(i: &str) -> Parser<'_, String> {
+    let (i, maybe_dot) = opt(tag(".")).parse(i)?;
+    let (i, maybe_extension) = opt(alphanumeric1).parse(i)?;
+
+    Ok((
+        i,
+        maybe_dot.unwrap_or("").to_owned() + maybe_extension.unwrap_or(""),
+    ))
 }
 
 fn main() {
