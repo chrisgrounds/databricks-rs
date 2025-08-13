@@ -15,7 +15,7 @@ pub struct FilePath(pub String);
 pub enum Lexer {
     Node {
         node_id: NodeId,
-        file_path: FilePath,
+        notebook_file_path: FilePath,
     },
     Edge(NodeId, NodeId),
 }
@@ -63,7 +63,7 @@ fn parse_node(i: &str) -> Parser<'_, Lexer> {
         i,
         Lexer::Node {
             node_id: NodeId(n_id.to_string()),
-            file_path: fpath,
+            notebook_file_path: fpath,
         },
     ))
 }
