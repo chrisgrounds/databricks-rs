@@ -13,33 +13,21 @@ use nom::{
 type Parser<'a, T> = IResult<&'a str, T>;
 
 #[derive(Debug, PartialEq)]
-pub struct Graph {
-    nodes: Vec<Node>,
-    edges: Vec<Edge>,
-}
-
-#[derive(Debug, PartialEq)]
 struct NodeId(pub String);
 
 #[derive(Debug, PartialEq)]
 struct FilePath(pub String);
 
 #[derive(Debug, PartialEq)]
-struct Node {
-    node_id: NodeId,
-    file_path: FilePath,
-}
-
-#[derive(Debug, PartialEq)]
-struct Edge(pub NodeId, pub NodeId);
-
-#[derive(Debug, PartialEq)]
 pub enum Lexer {
-    N(Node),
-    E(Edge),
+    Node {
+        node_id: NodeId,
+        file_path: FilePath,
+    },
+    Edge(NodeId, NodeId),
 }
 
-fn parse_edges(i: &str) -> Parser<Edge> {
+fn parse_edges(i: &str) -> Parser<Lexer> {
     let (i, _) = tag("(")(i)?;
     let (i, a) = alphanumeric1(i)?;
     let (i, _) = space0(i)?;
@@ -48,10 +36,10 @@ fn parse_edges(i: &str) -> Parser<Edge> {
     let (i, b) = alphanumeric1(i)?;
     let (i, _) = tag(")")(i)?;
 
-    Ok((i, Edge(NodeId(a.to_string()), NodeId(b.to_string()))))
+    Ok((i, Lexer::Edge(NodeId(a.to_string()), NodeId(b.to_string()))))
 }
 
-fn parse_file_path(i: &str) -> Parser<FilePath> {
+fn parse_file_path(i: &str) -> Parser<'_, FilePath> {
     let (i, _) = tag("'")(i)?;
     let (i, fpath) = alphanumeric1(i)?;
     let (i, fpath_extension) = parse_file_extension(i)?;
@@ -70,7 +58,7 @@ fn parse_file_extension(i: &str) -> Parser<String> {
     ))
 }
 
-fn parse_node(i: &str) -> Parser<Node> {
+fn parse_node(i: &str) -> Parser<'_, Lexer> {
     let (i, _) = tag("(")(i)?;
     let (i, _) = tag(".")(i)?;
     let (i, n_id) = alphanumeric1(i)?;
@@ -80,27 +68,20 @@ fn parse_node(i: &str) -> Parser<Node> {
 
     Ok((
         i,
-        Node {
+        Lexer::Node {
             node_id: NodeId(n_id.to_string()),
             file_path: fpath,
         },
     ))
 }
 
-fn parse_item(i: &str) -> Parser<Lexer> {
-    let (i, lst) = alt((map(parse_node, Lexer::N), map(parse_edges, Lexer::E))).parse(i)?;
+fn parse_item(i: &str) -> Parser<'_, Lexer> {
+    let (i, lst) = alt((parse_node, parse_edges)).parse(i)?;
 
     Ok((i, lst))
-    // Ok((
-    //     i,
-    //     Graph {
-    //         nodes: vec![],
-    //         edges: vec![],
-    //     },
-    // ))
 }
 
-fn parse_items(i: &str) -> Parser<Vec<Lexer>> {
+fn parse_items(i: &str) -> Parser<'_, Vec<Lexer>> {
     many1(parse_item).parse(i)
 }
 
