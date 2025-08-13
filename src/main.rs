@@ -1,22 +1,15 @@
 use nom::character::complete::{alphanumeric1, space1};
 use nom::combinator::opt;
 use nom::Parser as NomParser;
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    character::complete::{alpha1, digit1, space0},
-    combinator::map,
-    multi::many1,
-    IResult,
-};
+use nom::{branch::alt, bytes::complete::tag, character::complete::space0, multi::many1, IResult};
 
 type Parser<'a, T> = IResult<&'a str, T>;
 
 #[derive(Debug, PartialEq)]
-struct NodeId(pub String);
+pub struct NodeId(pub String);
 
 #[derive(Debug, PartialEq)]
-struct FilePath(pub String);
+pub struct FilePath(pub String);
 
 #[derive(Debug, PartialEq)]
 pub enum Lexer {
@@ -27,7 +20,7 @@ pub enum Lexer {
     Edge(NodeId, NodeId),
 }
 
-fn parse_edges(i: &str) -> Parser<Lexer> {
+fn parse_edges(i: &str) -> Parser<'_, Lexer> {
     let (i, _) = tag("(")(i)?;
     let (i, a) = alphanumeric1(i)?;
     let (i, _) = space0(i)?;
@@ -48,7 +41,7 @@ fn parse_file_path(i: &str) -> Parser<'_, FilePath> {
     Ok((i, FilePath(fpath.to_owned() + &fpath_extension)))
 }
 
-fn parse_file_extension(i: &str) -> Parser<String> {
+fn parse_file_extension(i: &str) -> Parser<'_, String> {
     let (i, maybe_dot) = opt(tag(".")).parse(i)?;
     let (i, maybe_extension) = opt(alphanumeric1).parse(i)?;
 
