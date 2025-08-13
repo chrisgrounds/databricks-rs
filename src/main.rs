@@ -25,9 +25,7 @@ fn parse_items(i: &str) -> Parser<'_, Vec<Lexer>> {
 }
 
 fn parse_item(i: &str) -> Parser<'_, Lexer> {
-    let (i, lst) = alt((parse_node, parse_edges)).parse(i)?;
-
-    Ok((i, lst))
+    alt((parse_node, parse_edges)).parse(i)
 }
 
 fn parse_edges(i: &str) -> Parser<'_, Lexer> {
